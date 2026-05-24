@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trace-tree"
+version = "0.1.0"
+description = "Render an agent JSONL audit log as an ASCII tree. Zero deps, reads agenttrace, agentleash, agentsnap, agent-step-log, and generic shapes."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Mukunda Rao Katta", email = "mukunda.vjcs6@gmail.com" }]
+keywords = ["agents", "audit", "observability", "trace", "jsonl", "tree", "cli"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Debuggers",
+    "Topic :: System :: Monitoring",
+]
+requires-python = ">=3.10"
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/MukundaKatta/trace-tree"
+Repository = "https://github.com/MukundaKatta/trace-tree"
+Issues = "https://github.com/MukundaKatta/trace-tree/issues"
+
+[project.scripts]
+trace-tree = "trace_tree.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+trace_tree = ["py.typed"]
