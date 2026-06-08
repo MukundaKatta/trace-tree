@@ -41,7 +41,9 @@ def test_session_grouping_aggregates_usd_and_calls() -> None:
 def test_parent_key_mode_links_children_to_parents() -> None:
     events = [
         _ev(span_id="root", kind="run"),
-        _ev(span_id="a", parent_id="root", kind="step_a", raw={"parent_span_id": "root"}),
+        _ev(
+            span_id="a", parent_id="root", kind="step_a", raw={"parent_span_id": "root"}
+        ),
         _ev(span_id="b", parent_id="a", kind="step_b", raw={"parent_span_id": "a"}),
     ]
     t = Tree.from_events(events, parent_key="parent_span_id")
@@ -54,12 +56,55 @@ def test_parent_key_mode_links_children_to_parents() -> None:
 
 def test_parent_key_mode_orphans_become_roots() -> None:
     events = [
-        _ev(span_id="a", kind="alpha", parent_id="missing", raw={"parent_span_id": "missing"}),
+        _ev(
+            span_id="a",
+            kind="alpha",
+            parent_id="missing",
+            raw={"parent_span_id": "missing"},
+        ),
         _ev(span_id="b", kind="beta", raw={}),
     ]
     t = Tree.from_events(events, parent_key="parent_span_id")
     # both alpha and beta should be roots (alpha's parent does not exist)
     assert len(t.roots) == 2
+
+
+def test_parent_key_mode_breaks_cycles_without_dropping_events() -> None:
+    # A's parent is B and B's parent is A. Neither has an acyclic path to a
+    # root, so a naive linker would leave roots empty and drop both events.
+    # We must keep every event reachable by promoting one node to a root.
+    events = [
+        _ev(span_id="a", kind="alpha", parent_id="b", raw={"parent_span_id": "b"}),
+        _ev(span_id="b", kind="beta", parent_id="a", raw={"parent_span_id": "a"}),
+    ]
+    t = Tree.from_events(events, parent_key="parent_span_id")
+    assert len(t.roots) == 1
+    # Both events still appear exactly once in the rendered tree.
+    rendered = t.render(ascii_only=True)
+    assert "alpha" in rendered
+    assert "beta" in rendered
+
+    def _count(node) -> int:
+        total = 1
+        for c in node.children:
+            total += _count(c)
+        return total
+
+    assert sum(_count(r) for r in t.roots) == 2
+
+
+def test_parent_key_mode_breaks_three_node_cycle() -> None:
+    # A -> B -> C -> A. Exactly one node becomes the root and all three remain.
+    events = [
+        _ev(span_id="a", kind="A", parent_id="c", raw={"parent_span_id": "c"}),
+        _ev(span_id="b", kind="B", parent_id="a", raw={"parent_span_id": "a"}),
+        _ev(span_id="c", kind="C", parent_id="b", raw={"parent_span_id": "b"}),
+    ]
+    t = Tree.from_events(events, parent_key="parent_span_id")
+    assert len(t.roots) == 1
+    rendered = t.render(ascii_only=True)
+    for kind in ("A", "B", "C"):
+        assert kind in rendered
 
 
 def test_empty_session_id_uses_no_session_bucket() -> None:

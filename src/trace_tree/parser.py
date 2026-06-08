@@ -131,7 +131,11 @@ def _explode_agentsnap(record: dict[str, Any]) -> list[Event]:
     out: list[Event] = []
     session = _to_str(_first(record, _SESSION_KEYS)) or _to_str(record.get("name"))
     if session:
-        out.append(normalize({"kind": "session_open", "session_id": session, "ts": record.get("ts")}))
+        out.append(
+            normalize(
+                {"kind": "session_open", "session_id": session, "ts": record.get("ts")}
+            )
+        )
     steps = record.get("steps")
     if isinstance(steps, list):
         for s in steps:
@@ -155,7 +159,9 @@ def parse_lines(lines: Iterable[str]) -> list[Event]:
             obj = json.loads(line)
         except json.JSONDecodeError:
             # Keep bad lines visible so the tree shows there was data we could not read.
-            events.append(Event(raw={"_raw": line}, kind="parse_error", error="invalid json"))
+            events.append(
+                Event(raw={"_raw": line}, kind="parse_error", error="invalid json")
+            )
             continue
         if isinstance(obj, dict) and isinstance(obj.get("steps"), list):
             events.extend(_explode_agentsnap(obj))

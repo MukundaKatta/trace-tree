@@ -48,7 +48,11 @@ def _label_for_event(ev: Event, show_timing: bool, show_args: bool) -> str:
 
     bits: list[str] = []
     if ev.usd:
-        bits.append(fmt_usd(ev.usd) + " attempted" if ev.kind == "budget_denied" else fmt_usd(ev.usd))
+        bits.append(
+            fmt_usd(ev.usd) + " attempted"
+            if ev.kind == "budget_denied"
+            else fmt_usd(ev.usd)
+        )
     if show_timing:
         ms = fmt_ms(ev.latency_ms)
         if ms:
@@ -186,15 +190,32 @@ class Tree:
             if ident and ident not in by_id:
                 by_id[ident] = node
 
+        # Track the assigned parent of each node so we can reject links that
+        # would form a cycle (e.g. A's parent is B while B's parent is A).
+        parent_of: dict[int, Node] = {}
+
+        def _would_cycle(child: Node, parent: Node) -> bool:
+            # Attaching child under parent creates a cycle iff child is parent
+            # or already an ancestor of parent. Walk up from parent.
+            cur: Node | None = parent
+            while cur is not None:
+                if cur is child:
+                    return True
+                cur = parent_of.get(id(cur))
+            return False
+
         roots: list[Node] = []
         for node in order:
             ev = node.event
             assert ev is not None  # for type checker; we just built it
             parent_id = ev.raw.get(parent_key) or ev.parent_id
             parent = by_id.get(parent_id) if isinstance(parent_id, str) else None
-            if parent and parent is not node:
+            if parent and parent is not node and not _would_cycle(node, parent):
                 parent.children.append(node)
+                parent_of[id(node)] = parent
             else:
+                # No parent, self-reference, or a cyclic link: keep the node
+                # visible as a root rather than silently dropping it.
                 roots.append(node)
         return cls(roots=roots, events=events)
 
@@ -270,7 +291,11 @@ class Tree:
             for j, det in enumerate(details):
                 last_detail = (j == len(details) - 1) and not real_children
                 cprefix = child_prefix(ancestors_last, is_last, ascii_only)
-                marker = ("└─ " if not ascii_only else "+- ") if last_detail else ("├─ " if not ascii_only else "|- ")
+                marker = (
+                    ("└─ " if not ascii_only else "+- ")
+                    if last_detail
+                    else ("├─ " if not ascii_only else "|- ")
+                )
                 lines.append(cprefix + marker + det)
 
             if real_children:

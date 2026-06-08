@@ -9,10 +9,10 @@ from __future__ import annotations
 
 # Box characters. We stick to the common subset so output is paste-safe in
 # most terminals and most code-block renderers.
-BRANCH = "+- "       # last child (single-byte fallback)
-TEE = "|- "          # middle child
-PIPE = "|  "         # vertical continuation
-BLANK = "   "        # no continuation
+BRANCH = "+- "  # last child (single-byte fallback)
+TEE = "|- "  # middle child
+PIPE = "|  "  # vertical continuation
+BLANK = "   "  # no continuation
 
 
 # Pretty unicode variants. Default to these; callers can pass ascii_only=True.
@@ -41,7 +41,9 @@ def prefix(ancestors_last: list[bool], is_last: bool, ascii_only: bool = False) 
     return "".join(parts)
 
 
-def child_prefix(ancestors_last: list[bool], is_last: bool, ascii_only: bool = False) -> str:
+def child_prefix(
+    ancestors_last: list[bool], is_last: bool, ascii_only: bool = False
+) -> str:
     """Build the continuation prefix for children-of-children lines.
 
     Used when we put a second info line under a node (like an args_hash or

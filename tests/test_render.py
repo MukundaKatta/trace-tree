@@ -57,7 +57,12 @@ def test_session_root_shows_aggregated_stats_in_brackets() -> None:
 def test_error_renders_as_quoted_child_line() -> None:
     events = [
         _ev(session_id="s", kind="session_open"),
-        _ev(session_id="s", kind="egress_denied", url="https://evil/exfil", error="host not in allowlist"),
+        _ev(
+            session_id="s",
+            kind="egress_denied",
+            url="https://evil/exfil",
+            error="host not in allowlist",
+        ),
     ]
     out = Tree.from_events(events).render()
     assert 'error="host not in allowlist"' in out
@@ -66,7 +71,13 @@ def test_error_renders_as_quoted_child_line() -> None:
 
 def test_args_hash_renders_as_child_line() -> None:
     events = [
-        _ev(session_id="s", kind="tool_ok", tool="charge", usd=4.99, args_hash="aeff9a9e"),
+        _ev(
+            session_id="s",
+            kind="tool_ok",
+            tool="charge",
+            usd=4.99,
+            args_hash="aeff9a9e",
+        ),
     ]
     out = Tree.from_events(events).render()
     assert "args_hash=aeff9a9e" in out
